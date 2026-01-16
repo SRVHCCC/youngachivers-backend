@@ -12,22 +12,35 @@ const app = express();
 ========================================================= */
 app.use(express.json());
 
-// ✅ CORS (Render + local)
-app.use(
-  cors({
-    origin: [
-      "https://youngachievers-2.onrender.com",
-      "http://localhost:3000",
-      "http://localhost:5173",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+// ✅ Allowed origins list
+const allowedOrigins = [
+  "https://youngachievers-2.onrender.com",
+  "http://localhost:3000",
+  "http://localhost:5173",
+];
 
-// ✅ Preflight request handle ✅ FIXED HERE
-app.options(/.*/, cors());
+// ✅ CORS config (Render + local)
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Postman / server-to-server (no origin) allow
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("CORS blocked: Origin not allowed"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
+// ✅ Apply cors middleware
+app.use(cors(corsOptions));
+
+// ✅ Preflight request handle (IMPORTANT)
+app.options(/.*/, cors(corsOptions));
 
 /* =========================================================
    ✅ ENV VALIDATION (IMPORTANT)
