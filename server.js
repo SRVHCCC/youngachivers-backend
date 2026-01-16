@@ -6,28 +6,74 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+/* =========================================================
+   ✅ MIDDLEWARE
+========================================================= */
 app.use(express.json());
 
-// ✅ Health Check
+// ✅ CORS (Render + local)
+app.use(
+  cors({
+    origin: [
+      "https://youngachievers-2.onrender.com",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+// ✅ Preflight request handle
+app.options("*", cors());
+
+/* =========================================================
+   ✅ ENV VALIDATION (IMPORTANT)
+========================================================= */
+const { EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL } = process.env;
+
+if (!EMAIL_USER || !EMAIL_PASS || !ADMIN_EMAIL) {
+  console.error("❌ ENV Missing! Please add these in Render:");
+  console.error("EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL");
+}
+
+/* =========================================================
+   ✅ HEALTH CHECK
+========================================================= */
 app.get("/", (req, res) => {
-  res.send("✅ Backend running...");
+  res.status(200).send("✅ Backend running...");
 });
 
-// ✅ Nodemailer Transporter
+/* =========================================================
+   ✅ NODEMAILER TRANSPORTER
+========================================================= */
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: EMAIL_USER,
+    pass: EMAIL_PASS,
   },
 });
 
-// ✅ 1) CONTACT INQUIRY API
+// ✅ Verify transporter (Render logs me show hoga)
+transporter.verify((err, success) => {
+  if (err) {
+    console.error("❌ Nodemailer transporter error:", err);
+  } else {
+    console.log("✅ Nodemailer transporter ready!");
+  }
+});
+
+/* =========================================================
+   ✅ 1) CONTACT INQUIRY API
+========================================================= */
 app.post("/api/contact-inquiry", async (req, res) => {
   try {
     const { childName, phone, admissionClass, message } = req.body;
 
+    // ✅ validation
     if (!childName || !phone || !message) {
       return res.status(400).json({
         message: "childName, phone and message required!",
@@ -36,6 +82,7 @@ app.post("/api/contact-inquiry", async (req, res) => {
 
     const htmlTemplate = `
       <div style="font-family: Arial, sans-serif; padding:20px; max-width:700px; margin:auto; border-radius:14px; border:1px solid #e5e7eb;">
+        
         <div style="background:linear-gradient(90deg,#673AB7,#4FC3F7,#FFB74D); padding:18px; border-radius:14px; color:#fff;">
           <h2 style="margin:0;">📩 New Contact Inquiry</h2>
           <p style="margin:6px 0 0; opacity:.95;">Young Achievers School Website</p>
@@ -72,8 +119,8 @@ app.post("/api/contact-inquiry", async (req, res) => {
     `;
 
     await transporter.sendMail({
-      from: `"Young Achievers Website" <${process.env.EMAIL_USER}>`,
-      to: process.env.ADMIN_EMAIL,
+      from: `"Young Achievers Website" <${EMAIL_USER}>`,
+      to: ADMIN_EMAIL,
       subject: `📩 New Contact Inquiry: ${childName}`,
       html: htmlTemplate,
     });
@@ -85,23 +132,26 @@ app.post("/api/contact-inquiry", async (req, res) => {
     console.error("❌ Contact Inquiry error:", err);
     return res.status(500).json({
       message: "❌ Failed to send contact inquiry email",
+      error: err.message,
     });
   }
 });
 
-// ✅ 2) ADMISSION INQUIRY API
+/* =========================================================
+   ✅ 2) ADMISSION INQUIRY API
+========================================================= */
 app.post("/api/admission-inquiry", async (req, res) => {
   try {
     const { studentName, admissionClass, dob, phone, lastSchool, address } =
       req.body;
 
+    // ✅ validation
     if (!studentName || !admissionClass || !dob || !phone) {
       return res.status(400).json({
         message: "studentName, admissionClass, dob, phone required!",
       });
     }
 
-    // ✅ Admission Email Template
     const admissionTemplate = `
       <div style="font-family: Arial, sans-serif; padding:20px; max-width:700px; margin:auto; border-radius:14px; border:1px solid #e5e7eb;">
         
@@ -158,10 +208,9 @@ app.post("/api/admission-inquiry", async (req, res) => {
       </div>
     `;
 
-    // ✅ Send admission inquiry email
     await transporter.sendMail({
-      from: `"Young Achievers Website" <${process.env.EMAIL_USER}>`,
-      to: process.env.ADMIN_EMAIL,
+      from: `"Young Achievers Website" <${EMAIL_USER}>`,
+      to: ADMIN_EMAIL,
       subject: `🎓 New Admission Inquiry: ${studentName} (${admissionClass})`,
       html: admissionTemplate,
     });
@@ -173,10 +222,13 @@ app.post("/api/admission-inquiry", async (req, res) => {
     console.error("❌ Admission Inquiry error:", err);
     return res.status(500).json({
       message: "❌ Failed to send admission inquiry email",
+      error: err.message,
     });
   }
 });
 
-
+/* =========================================================
+   ✅ SERVER START
+========================================================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
