@@ -46,11 +46,11 @@ app.options(/.*/, cors(corsOptions));
 /* =========================================================
    ✅ ENV VALIDATION (IMPORTANT)
 ========================================================= */
-const { EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL } = process.env;
+const { BREVO_USER, BREVO_PASS, ADMIN_EMAIL } = process.env;
 
-if (!EMAIL_USER || !EMAIL_PASS || !ADMIN_EMAIL) {
+if (!BREVO_USER || !BREVO_PASS || !ADMIN_EMAIL) {
   console.error("❌ ENV Missing! Please add these in Render:");
-  console.error("EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL");
+  console.error("BREVO_USER, BREVO_PASS, ADMIN_EMAIL");
 }
 
 /* =========================================================
@@ -61,18 +61,15 @@ app.get("/", (req, res) => {
 });
 
 /* =========================================================
-   ✅ NODEMAILER TRANSPORTER
+   ✅ NODEMAILER TRANSPORTER (BREVO SMTP)
 ========================================================= */
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "smtp-relay.brevo.com",
   port: 587,
-  secure: false,
+  secure: false, // TLS
   auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
+    user: BREVO_USER, // example: a03b4c001@smtp-brevo.com
+    pass: BREVO_PASS, // example: xsmtpsib-xxxx
   },
 });
 
@@ -138,7 +135,7 @@ app.post("/api/contact-inquiry", async (req, res) => {
     `;
 
     await transporter.sendMail({
-      from: `"Young Achievers Website" <${EMAIL_USER}>`,
+      from: `"Young Achievers Website" <${BREVO_USER}>`,
       to: ADMIN_EMAIL,
       subject: `📩 New Contact Inquiry: ${childName}`,
       html: htmlTemplate,
@@ -228,7 +225,7 @@ app.post("/api/admission-inquiry", async (req, res) => {
     `;
 
     await transporter.sendMail({
-      from: `"Young Achievers Website" <${EMAIL_USER}>`,
+      from: `"Young Achievers Website" <${BREVO_USER}>`,
       to: ADMIN_EMAIL,
       subject: `🎓 New Admission Inquiry: ${studentName} (${admissionClass})`,
       html: admissionTemplate,
