@@ -15,6 +15,7 @@ app.use(express.json());
 // ✅ Allowed origins list
 const allowedOrigins = [
   "https://youngachievers-2.onrender.com",
+  "https://youngachievers-2.onrender.com",
   "http://localhost:3000",
   "http://localhost:5173",
 ];
@@ -50,7 +51,7 @@ const { EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL } = process.env;
 if (!EMAIL_USER || !EMAIL_PASS || !ADMIN_EMAIL) {
   console.error("❌ ENV Missing! Please add these in Render:");
   console.error("EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL");
-} 
+}
 
 /* =========================================================
    ✅ HEALTH CHECK
@@ -63,10 +64,15 @@ app.get("/", (req, res) => {
    ✅ NODEMAILER TRANSPORTER
 ========================================================= */
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 
