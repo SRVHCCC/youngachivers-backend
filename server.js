@@ -26,8 +26,8 @@ app.use(
   })
 );
 
-// ✅ Preflight request handle
-app.options("*", cors());
+// ✅ Preflight request handle ✅ FIXED HERE
+app.options(/.*/, cors());
 
 /* =========================================================
    ✅ ENV VALIDATION (IMPORTANT)
@@ -37,7 +37,7 @@ const { EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL } = process.env;
 if (!EMAIL_USER || !EMAIL_PASS || !ADMIN_EMAIL) {
   console.error("❌ ENV Missing! Please add these in Render:");
   console.error("EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL");
-}
+} 
 
 /* =========================================================
    ✅ HEALTH CHECK
