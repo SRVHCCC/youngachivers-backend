@@ -1,0 +1,74 @@
+# ===============================
+# Dependencies
+# ===============================
+node_modules/
+.pnp/
+.pnp.js
+
+# ===============================
+# Build outputs
+# ===============================
+build/
+dist/
+out/
+
+# ===============================
+# Environment variables (SECRET)
+# ===============================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===============================
+# Logs
+# ===============================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# ===============================
+# OS / Editor files
+# ===============================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===============================
+# Cache
+# ===============================
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# ===============================
+# Testing
+# ===============================
+coverage/
+
+# ===============================
+# Optional: lock files (Team me only one use karna ho to)
+# ===============================
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ===============================
+# Backend specific
+# ===============================
+# If using nodemon
+.nodemonignore
+
+# ===============================
+# Local uploads / temp
+# ===============================
+uploads/
+tmp/
