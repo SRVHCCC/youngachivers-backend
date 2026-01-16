@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -46,11 +45,11 @@ app.options(/.*/, cors(corsOptions));
 /* =========================================================
    ✅ ENV VALIDATION (IMPORTANT)
 ========================================================= */
-const { BREVO_USER, BREVO_PASS, ADMIN_EMAIL } = process.env;
+const { BREVO_API_KEY, SENDER_EMAIL, ADMIN_EMAIL } = process.env;
 
-if (!BREVO_USER || !BREVO_PASS || !ADMIN_EMAIL) {
+if (!BREVO_API_KEY || !SENDER_EMAIL || !ADMIN_EMAIL) {
   console.error("❌ ENV Missing! Please add these in Render:");
-  console.error("BREVO_USER, BREVO_PASS, ADMIN_EMAIL");
+  console.error("BREVO_API_KEY, SENDER_EMAIL, ADMIN_EMAIL");
 }
 
 /* =========================================================
@@ -61,26 +60,37 @@ app.get("/", (req, res) => {
 });
 
 /* =========================================================
-   ✅ NODEMAILER TRANSPORTER (BREVO SMTP)
+   ✅ BREVO EMAIL API FUNCTION (HTTPS) ✅ 100% Render Working
 ========================================================= */
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false, // TLS
-  auth: {
-    user: BREVO_USER, // example: a03b4c001@smtp-brevo.com
-    pass: BREVO_PASS, // example: xsmtpsib-xxxx
-  },
-});
+async function sendBrevoEmail({ subject, html }) {
+  const payload = {
+    sender: {
+      name: "Young Achievers Website",
+      email: SENDER_EMAIL, // must be verified sender in Brevo
+    },
+    to: [{ email: ADMIN_EMAIL }],
+    subject: subject,
+    htmlContent: html,
+  };
 
-// ✅ Verify transporter (Render logs me show hoga)
-transporter.verify((err, success) => {
-  if (err) {
-    console.error("❌ Nodemailer transporter error:", err);
-  } else {
-    console.log("✅ Nodemailer transporter ready!");
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": BREVO_API_KEY,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(result?.message || "Brevo API email failed");
   }
-});
+
+  return result;
+}
 
 /* =========================================================
    ✅ 1) CONTACT INQUIRY API
@@ -134,9 +144,7 @@ app.post("/api/contact-inquiry", async (req, res) => {
       </div>
     `;
 
-    await transporter.sendMail({
-      from: `"Young Achievers Website" <${BREVO_USER}>`,
-      to: ADMIN_EMAIL,
+    await sendBrevoEmail({
       subject: `📩 New Contact Inquiry: ${childName}`,
       html: htmlTemplate,
     });
@@ -224,9 +232,7 @@ app.post("/api/admission-inquiry", async (req, res) => {
       </div>
     `;
 
-    await transporter.sendMail({
-      from: `"Young Achievers Website" <${BREVO_USER}>`,
-      to: ADMIN_EMAIL,
+    await sendBrevoEmail({
       subject: `🎓 New Admission Inquiry: ${studentName} (${admissionClass})`,
       html: admissionTemplate,
     });
